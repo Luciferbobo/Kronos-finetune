@@ -308,103 +308,11 @@ The script will output a detailed performance analysis in your console and gener
 
 ## 🔧 Finetuning on Your Custom CSV Data 
 
-For users who want to finetune Kronos on their own CSV-formatted financial data without using Qlib, we provide a simplified pipeline in the `finetune_csv/` directory. This approach is more straightforward and suitable for a single data from any market or exchange. 
+For users who want to finetune Kronos on their own CSV-formatted financial data without using Qlib, we provide a simplified pipeline in the `finetune_csv/` directory. This approach is more straightforward and suitable since most brokerage APIs return data in CSV format. Before start, ensure you have all dependencies from `requirements.txt` installed.
 
-### Prerequisites
+### Finetune
 
-Ensure you have all dependencies from `requirements.txt` installed.
-
-### Step 1: Prepare Your Data
-
-Your CSV file must contain the following columns:
-- `timestamps`: DateTime stamps for each data point
-- `open`: Opening price
-- `high`: Highest price
-- `low`: Lowest price  
-- `close`: Closing price
-- `volume`: Trading volume (can be 0 if not available)
-- `amount`: Trading amount (can be 0 if not available)
-
-**Example data format:**
-
-| timestamps | open | close | high | low | volume | amount |
-|------------|------|-------|------|-----|--------|--------|
-| 2019/11/26 9:35 | 182.45215 | 184.45215 | 184.95215 | 182.45215 | 15136000 | 0 |
-| 2019/11/26 9:40 | 184.35215 | 183.85215 | 184.55215 | 183.45215 | 4433300 | 0 |
-| 2019/11/26 9:45 | 183.85215 | 183.35215 | 183.95215 | 182.95215 | 3070900 | 0 |
-
-> **Reference**: Check `finetune_csv/data/HK_ali_09988_kline_5min_all.csv` for a complete example.
-
-### Step 2: Configure Your Experiment
-
-Create or modify a configuration file in `finetune_csv/configs/`. You can use `config_ali09988_candle-5min.yaml` as a template. 
-
-```yaml
-# Data configuration
-data:
-  data_path: "/path/to/your/data.csv"
-  lookback_window: 512        # Historical data points to use
-  predict_window: 48           # Future points to predict
-  max_context: 512            # Maximum context length
-
-...
-
-```
-
-### Step 3: Run the Finetuning
-
-#### Option 1: Sequential Training (Recommended)
-
-The `train_sequential.py` script handles the complete training pipeline automatically:
-
-```bash
-# Complete training (tokenizer + predictor)
-python train_sequential.py --config configs/config_ali09988_candle-5min.yaml
-
-# Skip existing models
-python train_sequential.py --config configs/config_ali09988_candle-5min.yaml --skip-existing
-
-# Only train tokenizer
-python train_sequential.py --config configs/config_ali09988_candle-5min.yaml --skip-basemodel
-
-# Only train predictor
-python train_sequential.py --config configs/config_ali09988_candle-5min.yaml --skip-tokenizer
-```
-
-#### Option 2: Individual Component Training
-
-Train each component separately for more control:
-
-```bash
-# Step 1: Train tokenizer
-python finetune_tokenizer.py --config configs/config_ali09988_candle-5min.yaml
-
-# Step 2: Train predictor (requires fine-tuned tokenizer)
-python finetune_base_model.py --config configs/config_ali09988_candle-5min.yaml
-```
-
-#### DDP Training
-
-For faster training on multiple GPUs:
-
-```bash
-# Set communication backend (nccl for NVIDIA GPUs, gloo for CPU/mixed)
-DIST_BACKEND=nccl \
-torchrun --standalone --nproc_per_node=8 train_sequential.py --config configs/config_ali09988_candle-5min.yaml
-```
-
-### Step 4: Training Results
-
-After training completes, you will find:
-
-**Model Checkpoints:**
-- **Tokenizer**: `{base_path}/{exp_name}/tokenizer/best_model/`
-- **Predictor**: `{base_path}/{exp_name}/basemodel/best_model/`
-
-**Training Logs:**
-- Console output with real-time training progress and metrics
-- Detailed logs saved to `{base_path}/logs/`
-- Best models are automatically saved based on validation loss
+See [`finetune_csv/README.md`](finetune_csv/README.md) for details.
 
 ### Example Results
 
